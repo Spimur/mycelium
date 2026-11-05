@@ -384,6 +384,39 @@ export default {
     'Install Mycelium to open it like an app straight from your home screen.',
   'Als App installieren': 'Install as app',
 
+  // ---------- Rechtliches ----------
+  Impressum: 'Legal notice',
+  Datenschutz: 'Privacy',
+  Datenschutzerklärung: 'privacy policy',
+  'Ich bin mindestens 16 Jahre alt und habe die': 'I am at least 16 years old and have read the',
+  'gelesen.': '.',
+  'Entsteht dabei ein neuer Account, bestätigst du, dass du mindestens 16 Jahre alt bist und die':
+    'If this creates a new account, you confirm that you are at least 16 years old and have read the',
+  'gelesen hast.': '.',
+
+  // ---------- Deine Daten ----------
+  'Deine Daten': 'Your data',
+  'Du kannst jederzeit eine Kopie aller Daten herunterladen oder deinen Account mit allen Daten löschen.':
+    'You can download a copy of all your data or delete your account with all its data at any time.',
+  'Daten herunterladen': 'Download data',
+  'Wird vorbereitet …': 'Preparing …',
+  'Export fehlgeschlagen. Bist du online?': 'Export failed. Are you online?',
+  'Account löschen': 'Delete account',
+  'Account löschen?': 'Delete account?',
+  'Dein Account und alle deine Notizen, Bilder, Aufgaben, Termine und Tags werden endgültig gelöscht. Das kann nicht rückgängig gemacht werden.':
+    'Your account and all your notes, images, tasks, events and tags will be permanently deleted. This cannot be undone.',
+  'Passwort zur Bestätigung': 'Password to confirm',
+  'Zur Bestätigung meldest du dich gleich nochmals bei Google an.': 'To confirm, you will sign in to Google again.',
+  'Ich will meinen Account und alle meine Daten endgültig löschen.': 'I want to permanently delete my account and all my data.',
+  'Wird gelöscht …': 'Deleting …',
+  'Endgültig löschen': 'Delete permanently',
+  'Das ist nicht das Google-Konto dieses Accounts.': 'This is not the Google account of this Mycelium account.',
+  'Bitte melde dich neu an und versuche es nochmals.': 'Please sign in again and retry.',
+  'Zurück zu Mycelium': 'Back to Mycelium',
+  Stand: 'Last updated',
+  'Die Angaben zum Betreiber fehlen noch (VITE_LEGAL_NAME, VITE_LEGAL_ADDRESS, VITE_LEGAL_EMAIL in .env.local).':
+    'The operator details are still missing (VITE_LEGAL_NAME, VITE_LEGAL_ADDRESS, VITE_LEGAL_EMAIL in .env.local).',
+
   // ---------- Sicherheit ----------
   'Nur Web-, E-Mail- und Telefon-Links sind erlaubt.': 'Only web, email and phone links are allowed.',
 }

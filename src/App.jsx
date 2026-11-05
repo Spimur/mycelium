@@ -11,6 +11,7 @@ import Home from './pages/Home'
 import FolderPage from './pages/FolderPage'
 import TodoPage from './pages/TodoPage'
 import SettingsPage from './pages/SettingsPage'
+import LegalPage from './pages/LegalPage'
 
 // Editor und Kalender sind die grössten Teile und werden erst bei Bedarf geladen
 const NotePage = lazy(() => import('./pages/NotePage'))
@@ -40,6 +41,8 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
+      <Route path="/impressum" element={<LegalPage page="imprint" />} />
+      <Route path="/datenschutz" element={<LegalPage page="privacy" />} />
       <Route element={<Protected />}>
         <Route index element={<Home />} />
         <Route path="n/:id" element={<Suspense><NotePage /></Suspense>} />

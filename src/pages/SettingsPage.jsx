@@ -1,7 +1,9 @@
 import { useState } from 'react'
-import { Check, Download, KeyRound, LogOut, Monitor, Moon, Share, Sun, Trash2 } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Check, Download, FileDown, KeyRound, LogOut, Monitor, Moon, Share, Sun, Trash2 } from 'lucide-react'
 import { authErrorMessage, displayNameOf, useAuth } from '../lib/auth'
 import { useWorkspace } from '../lib/workspace'
+import { readAllUserData } from '../lib/backend'
 import { LANGUAGES, setLang, t, tn, useLang } from '../lib/i18n'
 import { isIOS, isStandalone, promptInstall, useInstallPrompt } from '../lib/pwa'
 import { setThemePref, useThemePref } from '../lib/theme'
@@ -9,7 +11,7 @@ import { colorHex } from '../lib/palette'
 import { PageHeader } from '../components/Layout'
 import { NewTagForm } from '../components/Tags'
 import { useToast } from '../components/Toast'
-import { Button, ConfirmDialog, Popover, Swatches, cx } from '../components/ui'
+import { Button, ConfirmDialog, Modal, Popover, Swatches, cx } from '../components/ui'
 
 function Section({ title, description, children }) {
   return (
@@ -217,6 +219,114 @@ function TagsSection() {
   )
 }
 
+function DeleteAccountDialog({ onClose }) {
+  const { user, deleteAccount, isLocalMode } = useAuth()
+  const [password, setPassword] = useState('')
+  const [confirmed, setConfirmed] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const needsPassword = !isLocalMode && user.usesPassword
+  const ready = confirmed && (!needsPassword || password) && !busy
+
+  const submit = async (e) => {
+    e.preventDefault()
+    if (!ready) return
+    setBusy(true)
+    setError('')
+    try {
+      await deleteAccount(password)
+    } catch (err) {
+      console.error(err)
+      setError(authErrorMessage(err))
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Modal open onClose={busy ? () => {} : onClose} title={t('Account löschen?')}>
+      <form onSubmit={submit} className="space-y-4">
+        <p className="text-sm leading-relaxed text-muted">
+          {t('Dein Account und alle deine Notizen, Bilder, Aufgaben, Termine und Tags werden endgültig gelöscht. Das kann nicht rückgängig gemacht werden.')}
+        </p>
+        {needsPassword && (
+          <label className="block">
+            <span className="label mb-1.5 block">{t('Passwort zur Bestätigung')}</span>
+            <input
+              type="password"
+              className="field"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </label>
+        )}
+        {!needsPassword && !isLocalMode && (
+          <p className="text-[13px] text-muted">{t('Zur Bestätigung meldest du dich gleich nochmals bei Google an.')}</p>
+        )}
+        <label className="flex cursor-pointer items-start gap-2.5 text-[13.5px]">
+          <input
+            type="checkbox"
+            className="mt-0.5 accent-[var(--c-danger)]"
+            checked={confirmed}
+            onChange={(e) => setConfirmed(e.target.checked)}
+          />
+          {t('Ich will meinen Account und alle meine Daten endgültig löschen.')}
+        </label>
+        {error && <p className="text-sm text-danger">{error}</p>}
+        <div className="flex justify-end gap-2 pt-1">
+          <Button type="button" disabled={busy} onClick={onClose}>
+            {t('Abbrechen')}
+          </Button>
+          <Button type="submit" variant="primary" className="!bg-danger" disabled={!ready}>
+            <Trash2 size={14} /> {busy ? t('Wird gelöscht …') : t('Endgültig löschen')}
+          </Button>
+        </div>
+      </form>
+    </Modal>
+  )
+}
+
+function DataSection() {
+  const { user } = useAuth()
+  const { uid } = useWorkspace()
+  const toast = useToast()
+  const [exporting, setExporting] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+
+  const exportData = async () => {
+    setExporting(true)
+    try {
+      const data = await readAllUserData(uid)
+      const payload = { exportedAt: new Date().toISOString(), account: { email: user.email, displayName: user.displayName }, data }
+      const url = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }))
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `mycelium-export-${new Date().toISOString().slice(0, 10)}.json`
+      link.click()
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      console.error(err)
+      toast(t('Export fehlgeschlagen. Bist du online?'), { tone: 'error' })
+    } finally {
+      setExporting(false)
+    }
+  }
+
+  return (
+    <Section title={t('Deine Daten')} description={t('Du kannst jederzeit eine Kopie aller Daten herunterladen oder deinen Account mit allen Daten löschen.')}>
+      <div className="flex flex-wrap gap-2">
+        <Button variant="outline" disabled={exporting} onClick={exportData}>
+          <FileDown size={14} /> {exporting ? t('Wird vorbereitet …') : t('Daten herunterladen')}
+        </Button>
+        <Button variant="danger" onClick={() => setDeleting(true)}>
+          <Trash2 size={14} /> {t('Account löschen')}
+        </Button>
+      </div>
+      {deleting && <DeleteAccountDialog onClose={() => setDeleting(false)} />}
+    </Section>
+  )
+}
+
 function AppSection() {
   const installEvent = useInstallPrompt()
   let content
@@ -313,6 +423,8 @@ export default function SettingsPage() {
 
           <TagsSection />
 
+          <DataSection />
+
           <Section
             title={t('Konto')}
             description={
@@ -324,6 +436,14 @@ export default function SettingsPage() {
             <Button variant="outline" onClick={signOut}>
               <LogOut size={14} /> {t('Abmelden')}
             </Button>
+            <p className="mt-5 flex gap-4 text-[13px] text-muted">
+              <Link to="/impressum" className="underline underline-offset-3 hover:text-ink">
+                {t('Impressum')}
+              </Link>
+              <Link to="/datenschutz" className="underline underline-offset-3 hover:text-ink">
+                {t('Datenschutz')}
+              </Link>
+            </p>
           </Section>
         </div>
       </div>

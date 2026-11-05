@@ -61,8 +61,9 @@ Diese Anleitung richtet ein eigenes, von anderen Instanzen getrenntes Firebase-P
    firebase login
    firebase use --add
    ```
-6. Veröffentlichen: `npm run deploy`
-7. Die [Einstellungen weiter unten](#einstellungen-für-den-eigenen-betrieb) vornehmen.
+6. Betreiber-Angaben für Impressum und Datenschutzerklärung eintragen (siehe [Rechtliches](#rechtliches)).
+7. Veröffentlichen: `npm run deploy`
+8. Die [Einstellungen weiter unten](#einstellungen-für-den-eigenen-betrieb) vornehmen.
 
 ### Kosten
 
@@ -100,8 +101,15 @@ Diese Punkte lassen sich nicht im Code festlegen und müssen pro Firebase-Projek
 
 Sicherheitslücken bitte nicht öffentlich melden, siehe [SECURITY.md](SECURITY.md).
 
+## Rechtliches
+
+Die Website enthält ein Impressum (`/impressum`) und eine Datenschutzerklärung (`/datenschutz`). Die Texte in [`src/pages/LegalPage.jsx`](src/pages/LegalPage.jsx) sind auf die Instanz des Projekts zugeschnitten (Schweiz, Firestore in Europa, Google-Anmeldung) und **keine Rechtsberatung**. Wer eine eigene Instanz betreibt, ist selbst verantwortlich und muss sie prüfen und anpassen.
+
+Name, Postadresse und E-Mail des Betreibers stehen nicht im Repository, sondern in `.env.local` (`VITE_LEGAL_NAME`, `VITE_LEGAL_ADDRESS`, `VITE_LEGAL_EMAIL`). Sie erscheinen öffentlich auf der Website. Ein Produktions-Build mit Firebase bricht ab, solange sie fehlen.
+
 ## Bekannte Einschränkungen
 
+- Keine Altersprüfung: Das Mindestalter von 16 Jahren wird bei der Registrierung nur bestätigt.
 - Ist dieselbe Notiz auf zwei Geräten gleichzeitig offen, gewinnt die zuletzt gespeicherte Version.
 - Änderungen an einem wiederkehrenden Termin gelten immer für die ganze Serie.
 - Keine Erinnerungen oder Push-Benachrichtigungen: Dafür wäre ein Server nötig, der über den Spark-Tarif hinausgeht.

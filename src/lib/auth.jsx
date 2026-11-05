@@ -1,8 +1,12 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import {
+  EmailAuthProvider,
   GoogleAuthProvider,
   createUserWithEmailAndPassword,
+  deleteUser,
   onAuthStateChanged,
+  reauthenticateWithCredential,
+  reauthenticateWithPopup,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
@@ -10,7 +14,7 @@ import {
   updateProfile,
 } from 'firebase/auth'
 import { auth } from './firebase'
-import { isLocalMode } from './backend'
+import { deleteAllUserData, isLocalMode } from './backend'
 import { t } from './i18n'
 
 const AuthContext = createContext(null)
@@ -29,6 +33,8 @@ const ERRORS = {
   'auth/network-request-failed': 'Keine Verbindung zum Server.',
   'auth/popup-closed-by-user': 'Anmeldung abgebrochen.',
   'auth/operation-not-allowed': 'Diese Anmeldemethode ist in Firebase noch nicht aktiviert.',
+  'auth/user-mismatch': 'Das ist nicht das Google-Konto dieses Accounts.',
+  'auth/requires-recent-login': 'Bitte melde dich neu an und versuche es nochmals.',
   'auth/unauthorized-domain': 'Diese Domain ist in Firebase nicht freigegeben (Authentication → Einstellungen).',
 }
 
@@ -57,7 +63,25 @@ const storage = {
 const localUser = () => ({ uid: 'local', displayName: storage.get(LOCAL_NAME_KEY), email: null, isLocal: true })
 
 // Nur die Felder, die die App braucht – so lässt sich der Name nach einer Änderung sofort neu anzeigen
-const pick = (u) => u && { uid: u.uid, email: u.email, displayName: u.displayName, photoURL: u.photoURL }
+const pick = (u) =>
+  u && {
+    uid: u.uid,
+    email: u.email,
+    displayName: u.displayName,
+    photoURL: u.photoURL,
+    usesPassword: u.providerData.some((p) => p.providerId === 'password'),
+  }
+
+// Gerätebezogene Einstellungen entfernen, Sprache und Farbschema gehören nicht zum Account
+function clearDeviceData() {
+  try {
+    Object.keys(localStorage)
+      .filter((key) => key.startsWith('mycelium:') && !['mycelium:lang', 'mycelium:theme'].includes(key))
+      .forEach((key) => localStorage.removeItem(key))
+  } catch {
+    /* privater Modus */
+  }
+}
 
 export function AuthProvider({ children }) {
   const [state, setState] = useState(() =>
@@ -93,6 +117,27 @@ export function AuthProvider({ children }) {
     enterLocal() {
       storage.set(LOCAL_SESSION_KEY, '1')
       setState({ user: localUser(), loading: false })
+    },
+    /**
+     * Löscht Account und alle Daten. Firebase verlangt dafür eine frische Anmeldung; sie steht bewusst
+     * vor dem Löschen der Daten, damit ein falsches Passwort nichts anrichtet.
+     */
+    async deleteAccount(password) {
+      if (isLocalMode) {
+        await deleteAllUserData(state.user.uid)
+        clearDeviceData()
+        setState({ user: null, loading: false })
+        return
+      }
+      const current = auth.currentUser
+      if (state.user.usesPassword) {
+        await reauthenticateWithCredential(current, EmailAuthProvider.credential(current.email, password))
+      } else {
+        await reauthenticateWithPopup(current, new GoogleAuthProvider())
+      }
+      await deleteAllUserData(current.uid)
+      await deleteUser(current)
+      clearDeviceData()
     },
     async signOut() {
       if (isLocalMode) {

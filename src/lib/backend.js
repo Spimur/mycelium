@@ -1,9 +1,23 @@
 // Einheitliche Speicher-Schnittstelle. Alle Daten liegen pro Account unter users/{uid}/{collection}/{id}.
 // Ist Firebase nicht konfiguriert, wird stattdessen IndexedDB im Browser verwendet.
-import { collection, deleteDoc, doc, getDoc, onSnapshot, setDoc, writeBatch } from 'firebase/firestore'
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocsFromServer,
+  limit,
+  onSnapshot,
+  query,
+  setDoc,
+  writeBatch,
+} from 'firebase/firestore'
 import { db, isFirebaseConfigured } from './firebase'
 
 export const isLocalMode = !isFirebaseConfigured
+
+// Alle Sammlungen eines Accounts. Neue Sammlungen hier ergänzen, damit Export und Löschung sie erfassen.
+const USER_COLLECTIONS = ['nodes', 'contents', 'assets', 'events', 'todos', 'tags', 'settings']
 
 export const newId = () => crypto.randomUUID().replace(/-/g, '').slice(0, 20)
 
@@ -42,6 +56,21 @@ const cloud = {
     for (const part of chunk(entries, 400)) {
       const batch = writeBatch(db)
       part.forEach(({ id, data }) => batch.set(doc(db, 'users', uid, name, id), data, { merge: true }))
+      await batch.commit()
+    }
+  },
+  // Export und Löschung lesen vom Server: Der Offline-Cache könnte unvollständig sein
+  async list(uid, name) {
+    const snap = await getDocsFromServer(collection(db, 'users', uid, name))
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+  },
+  async removeAll(uid, name) {
+    // In kleinen Portionen, weil Bilddokumente gross sind
+    for (;;) {
+      const snap = await getDocsFromServer(query(collection(db, 'users', uid, name), limit(50)))
+      if (snap.empty) return
+      const batch = writeBatch(db)
+      snap.docs.forEach((d) => batch.delete(d.ref))
       await batch.commit()
     }
   },
@@ -125,6 +154,21 @@ const local = {
       }),
     )
   },
+  async list(uid, name) {
+    return toList(await load(keyOf(uid, name)))
+  },
+  removeAll(uid, name) {
+    return mutate(uid, name, (data) => Object.keys(data).forEach((id) => delete data[id]))
+  },
 }
 
 export const backend = isFirebaseConfigured ? cloud : local
+
+/** Alle Daten eines Accounts als Objekt { sammlung: [dokumente] }, für den Export. */
+export async function readAllUserData(uid) {
+  const lists = await Promise.all(USER_COLLECTIONS.map((name) => backend.list(uid, name)))
+  return Object.fromEntries(USER_COLLECTIONS.map((name, i) => [name, lists[i]]))
+}
+
+/** Löscht alle Daten eines Accounts unwiderruflich. */
+export const deleteAllUserData = (uid) => Promise.all(USER_COLLECTIONS.map((name) => backend.removeAll(uid, name)))

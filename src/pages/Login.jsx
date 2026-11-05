@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { ArrowRight, Moon, Sun } from 'lucide-react'
 import { authErrorMessage, useAuth } from '../lib/auth'
 import { toggleTheme, useTheme } from '../lib/theme'
@@ -32,6 +33,7 @@ export default function Login() {
   const [error, setError] = useState('')
   const [info, setInfo] = useState('')
   const [busy, setBusy] = useState(false)
+  const [accepted, setAccepted] = useState(false)
 
   const run = async (fn) => {
     setError('')
@@ -170,6 +172,24 @@ export default function Login() {
                     onChange={(e) => setPassword(e.target.value)}
                   />
                 )}
+                {mode === 'signup' && (
+                  <label className="flex cursor-pointer items-start gap-2.5 pt-1 text-[13px] leading-snug text-muted">
+                    <input
+                      type="checkbox"
+                      required
+                      className="mt-0.5 accent-[var(--c-accent)]"
+                      checked={accepted}
+                      onChange={(e) => setAccepted(e.target.checked)}
+                    />
+                    <span>
+                      {t('Ich bin mindestens 16 Jahre alt und habe die')}{' '}
+                      <Link to="/datenschutz" className="underline hover:text-ink">
+                        {t('Datenschutzerklärung')}
+                      </Link>{' '}
+                      {t('gelesen.')}
+                    </span>
+                  </label>
+                )}
                 {error && <p className="text-sm text-danger">{error}</p>}
                 {info && <p className="text-sm text-accent-ink">{info}</p>}
                 <Button variant="primary" type="submit" disabled={busy} className="h-11 w-full">
@@ -190,11 +210,20 @@ export default function Login() {
                   <Button
                     variant="outline"
                     className="h-11 w-full"
-                    disabled={busy}
+                    disabled={busy || (mode === 'signup' && !accepted)}
                     onClick={() => run(signInWithGoogle)}
                   >
                     <GoogleMark /> {t('Mit Google fortfahren')}
                   </Button>
+                  {mode === 'login' && (
+                    <p className="mt-3 text-xs leading-relaxed text-faint">
+                      {t('Entsteht dabei ein neuer Account, bestätigst du, dass du mindestens 16 Jahre alt bist und die')}{' '}
+                      <Link to="/datenschutz" className="underline hover:text-ink">
+                        {t('Datenschutzerklärung')}
+                      </Link>{' '}
+                      {t('gelesen hast.')}
+                    </p>
+                  )}
                 </>
               )}
 
@@ -217,6 +246,15 @@ export default function Login() {
             </>
           )}
         </div>
+
+        <footer className="relative flex gap-4 text-xs text-faint">
+          <Link to="/impressum" className="hover:text-ink">
+            {t('Impressum')}
+          </Link>
+          <Link to="/datenschutz" className="hover:text-ink">
+            {t('Datenschutz')}
+          </Link>
+        </footer>
       </div>
     </div>
   )

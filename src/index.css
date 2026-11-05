@@ -163,6 +163,37 @@
   }
 }
 
+/* ---------- Rechtstexte ---------- */
+.legal-text {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--c-muted);
+}
+.legal-text h2 {
+  margin-top: 2em;
+  margin-bottom: 0.4em;
+  font-family: var(--font-display);
+  font-size: 1.6em;
+  line-height: 1.2;
+  color: var(--c-ink);
+}
+.legal-text strong {
+  font-weight: 500;
+  color: var(--c-ink);
+}
+.legal-text a {
+  color: var(--c-accent-ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.legal-text ul {
+  list-style: disc;
+  padding-left: 1.3em;
+}
+.legal-text li + li {
+  margin-top: 0.5em;
+}
+
 /* ---------- Editor ---------- */
 .prose-myc {
   font-size: 16px;
