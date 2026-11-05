@@ -1,0 +1,38 @@
+# Abhängigkeiten & Build
+node_modules
+dist
+dist-ssr
+
+# Umgebungsvariablen: niemals einchecken (nur die Vorlage)
+.env
+.env.*
+!.env.example
+!.env.emulators
+*.local
+
+# Firebase: Projektzuordnung und Cache sind pro Entwickler
+.firebaserc
+.firebase
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor / System
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+Thumbs.db
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
